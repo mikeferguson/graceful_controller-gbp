@@ -1,0 +1,13 @@
+Source: ros-noetic-graceful-controller-ros
+Section: misc
+Priority: optional
+Maintainer: Michael Ferguson <fergs@cobaltrobotics.com>
+Build-Depends: debhelper (>= 9.0.0), ros-noetic-angles, ros-noetic-base-local-planner, ros-noetic-catkin, ros-noetic-costmap-2d, ros-noetic-dynamic-reconfigure, ros-noetic-geometry-msgs, ros-noetic-graceful-controller, ros-noetic-nav-core, ros-noetic-nav-msgs, ros-noetic-pluginlib, ros-noetic-roscpp, ros-noetic-std-msgs, ros-noetic-tf2-geometry-msgs, ros-noetic-tf2-ros
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-noetic-graceful-controller-ros
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-noetic-angles, ros-noetic-base-local-planner, ros-noetic-costmap-2d, ros-noetic-dynamic-reconfigure, ros-noetic-geometry-msgs, ros-noetic-graceful-controller, ros-noetic-nav-core, ros-noetic-nav-msgs, ros-noetic-pluginlib, ros-noetic-roscpp, ros-noetic-std-msgs, ros-noetic-tf2-geometry-msgs, ros-noetic-tf2-ros
+Description: A controller.
+ Some say it might be graceful.
