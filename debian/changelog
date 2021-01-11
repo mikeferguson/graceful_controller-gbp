@@ -1,0 +1,16 @@
+ros-noetic-graceful-controller-ros (0.2.1-1focal) focal; urgency=high
+
+  * update maintainer email
+  * fix the buildfarm build (#8 <https://github.com/mikeferguson/graceful_controller/issues/8>)
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Mon, 11 Jan 2021 05:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.2.0-1focal) focal; urgency=high
+
+  * Initial release
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <fergs@cobaltrobotics.com>  Mon, 11 Jan 2021 05:00:00 -0000
+
+
