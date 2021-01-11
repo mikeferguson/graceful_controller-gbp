@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>graceful_controller_ros</name>
-  <version>0.2.0</version>
+  <version>0.2.1</version>
   <description>
     A controller. Some say it might be graceful.
   </description>
 
   <author>Michael Ferguson</author>
-  <maintainer email="fergs@cobaltrobotics.com">Michael Ferguson</maintainer>
+  <maintainer email="mfergs7@gmail.com">Michael Ferguson</maintainer>
 
   <license>BSD</license>
 
