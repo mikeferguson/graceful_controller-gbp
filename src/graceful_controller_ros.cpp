@@ -43,9 +43,11 @@
 #include <nav_msgs/Path.h>
 
 #include <angles/angles.h>
+#include <base_local_planner/line_iterator.h>
 #include <base_local_planner/local_planner_util.h>
 #include <base_local_planner/goal_functions.h>
 #include <base_local_planner/odometry_helper_ros.h>
+#include <costmap_2d/footprint.h>
 #include <graceful_controller/graceful_controller.hpp>
 #include <std_msgs/Float32.h>
 #include <tf2/utils.h>
@@ -60,6 +62,69 @@ namespace graceful_controller
 double sign(double x)
 {
   return x < 0.0 ? -1.0 : 1.0;
+}
+
+/**
+ * @brief Collision check the robot pose
+ * @param x The robot x coordinate in costmap.global frame
+ * @param y The robot y coordinate in costmap.global frame
+ * @param theta The robot rotation in costmap.global frame
+ */
+bool isColliding(double x, double y, double theta,
+                 costmap_2d::Costmap2DROS* costmap)
+{
+  unsigned mx, my;
+  if (!costmap->getCostmap()->worldToMap(x, y, mx, my))
+  {
+    ROS_DEBUG("Path is off costmap (%f,%f)", x, y);
+    return true;
+  }
+
+  std::vector<geometry_msgs::Point> spec = costmap->getRobotFootprint();
+  std::vector<geometry_msgs::Point> footprint;
+  costmap_2d::transformFootprint(x, y, theta, spec, footprint);
+
+  // If our footprint is less than 4 corners, treat as circle
+  if (footprint.size() < 4)
+  {
+    if (costmap->getCostmap()->getCost(mx, my) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
+    {
+      ROS_DEBUG("Collision along path at (%f,%f)", x, y);
+      return true;
+    }
+    // Done collison checking
+    return false;
+  }
+
+  // Do a complete collision check of the footprint boundary
+  for (size_t i = 0; i < footprint.size(); ++i)
+  {
+    unsigned x0, y0, x1, y1;
+    if (!costmap->getCostmap()->worldToMap(footprint[i].x, footprint[i].y, x0, y0))
+    {
+      ROS_DEBUG("Footprint point %lu is off costmap", i);
+      return true;
+    }
+
+    size_t next = (i + 1) % footprint.size();
+    if (!costmap->getCostmap()->worldToMap(footprint[next].x, footprint[next].y, x1, y1))
+    {
+      ROS_DEBUG("Footprint point %lu is off costmap", next);
+      return true;
+    }
+
+    for (base_local_planner::LineIterator line(x0,y0,x1,y1); line.isValid(); line.advance())
+    {
+      if (costmap->getCostmap()->getCost(line.getX(), line.getY()) >= costmap_2d::LETHAL_OBSTACLE)
+      {
+        ROS_DEBUG("Collision along path at (%f,%f)", x, y);
+        return true;
+      }
+    }
+  }
+
+  // Not colliding
+  return false;
 }
 
 class GracefulControllerROS : public nav_core::BaseLocalPlanner
@@ -129,36 +194,18 @@ public:
     // Lock the mutex
     std::lock_guard<std::mutex> lock(config_mutex_);
 
-    // Update generic local planner params
-    base_local_planner::LocalPlannerLimits limits;
-    limits.max_vel_trans = config.max_vel_trans;
-    limits.min_vel_trans = config.min_vel_trans;
-    limits.max_vel_x = config.max_vel_x;
-    limits.min_vel_x = config.min_vel_x;
-    limits.max_vel_y = config.max_vel_y;
-    limits.min_vel_y = config.min_vel_y;
-    limits.max_vel_theta = config.max_vel_theta;
-    limits.min_vel_theta = config.min_vel_theta;
-    limits.acc_lim_x = config.acc_lim_x;
-    limits.acc_lim_y = config.acc_lim_y;
-    limits.acc_lim_theta = config.acc_lim_theta;
-    limits.acc_lim_trans = config.acc_lim_trans;
-    limits.xy_goal_tolerance = config.xy_goal_tolerance;
-    limits.yaw_goal_tolerance = config.yaw_goal_tolerance;
-    limits.prune_plan = config.prune_plan;
-    limits.trans_stopped_vel = config.trans_stopped_vel;
-    limits.theta_stopped_vel = config.theta_stopped_vel;
-    planner_util_.reconfigureCB(limits, false);
-
+    max_vel_x_ = config.max_vel_x;
+    min_vel_x_ = config.min_vel_x;
+    max_vel_theta_ = config.max_vel_theta;
+    min_vel_theta_ = config.min_vel_theta;
+    min_in_place_vel_theta_ = config.min_in_place_vel_theta;
+    acc_lim_x_ = config.acc_lim_x;
+    acc_lim_theta_ = config.acc_lim_theta;
     xy_goal_tolerance_ = config.xy_goal_tolerance;
     yaw_goal_tolerance_ = config.yaw_goal_tolerance;
-    min_in_place_vel_theta_ = config.min_in_place_vel_theta;
     max_lookahead_ = config.max_lookahead;
     initial_rotate_tolerance_ = config.initial_rotate_tolerance;
     resolution_ = planner_util_.getCostmap()->getResolution();
-
-    // Note: calling dynamic reconfigure will override velocity topic
-    max_vel_x_ = config.max_vel_x;
 
     controller_ = std::make_shared<GracefulController>(config.k1,
                                                        config.k2,
@@ -253,13 +300,12 @@ public:
       // Configure controller max velocity based on current speed
       if (!odom_helper_.getOdomTopic().empty())
       {
-        base_local_planner::LocalPlannerLimits limits = planner_util_.getCurrentLimits();
         geometry_msgs::PoseStamped robot_velocity;
         odom_helper_.getRobotVel(robot_velocity);
-        double max_vel_x = robot_velocity.pose.position.x + (limits.acc_lim_x * acc_dt_);
+        double max_vel_x = robot_velocity.pose.position.x + (acc_lim_x_ * acc_dt_);
         max_vel_x = std::min(max_vel_x, max_vel_x_);
-        max_vel_x = std::max(max_vel_x, limits.min_vel_x);
-        controller_->setVelocityLimits(limits.min_vel_x, max_vel_x, limits.max_vel_theta);
+        max_vel_x = std::max(max_vel_x, min_vel_x_);
+        controller_->setVelocityLimits(min_vel_x_, max_vel_x, max_vel_theta_);
       }
 
       // Simulated path (for debugging/visualization)
@@ -350,16 +396,12 @@ public:
 
         // Check next pose for collision
         tf2::doTransform(next_pose, next_pose, base_to_odom);
-        unsigned mx, my;
-        if (!planner_util_.getCostmap()->worldToMap(next_pose.pose.position.x, next_pose.pose.position.y, mx, my))
+        if (isColliding(next_pose.pose.position.x,
+                        next_pose.pose.position.y,
+                        yaw,
+                        costmap_ros_))
         {
-          ROS_DEBUG("Path is off costmap (%f,%f)", next_pose.pose.position.x, next_pose.pose.position.y);
-          break;
-        }
-        if (planner_util_.getCostmap()->getCost(mx, my) >= costmap_2d::INSCRIBED_INFLATED_OBSTACLE)
-        {
-          // Collision - can't go this far!
-          ROS_DEBUG("Collision along path at (%f,%f)", next_pose.pose.position.x, next_pose.pose.position.y);
+          // Reason will be printed in function
           break;
         }
       }
@@ -472,23 +514,20 @@ public:
 
     ROS_DEBUG("Rotating towards goal, error = %f", yaw);
 
-    // Get limits so we can compute velocity
-    base_local_planner::LocalPlannerLimits limits = planner_util_.getCurrentLimits();
-
     // Determine max velocity based on current speed
-    double max_vel_th = limits.max_vel_theta;
+    double max_vel_th = max_vel_theta_;
     if (!odom_helper_.getOdomTopic().empty())
     {
       geometry_msgs::PoseStamped robot_velocity;
       odom_helper_.getRobotVel(robot_velocity);
       double abs_vel = fabs(tf2::getYaw(robot_velocity.pose.orientation));
-      double acc_limited = abs_vel + (limits.acc_lim_theta * acc_dt_);
+      double acc_limited = abs_vel + (acc_lim_theta_ * acc_dt_);
       max_vel_th = std::min(max_vel_th, acc_limited);
       max_vel_th = std::max(max_vel_th, min_in_place_vel_theta_);
     }
 
     cmd_vel.linear.x = 0.0;
-    cmd_vel.angular.z = 2 * limits.acc_lim_theta * fabs(yaw);
+    cmd_vel.angular.z = 2 * acc_lim_theta_ * fabs(yaw);
     cmd_vel.angular.z = sign(yaw) * std::min(max_vel_th, std::max(min_in_place_vel_theta_, cmd_vel.angular.z));
 
     // Return error
@@ -501,8 +540,7 @@ private:
     // Lock the mutex
     std::lock_guard<std::mutex> lock(config_mutex_);
 
-    base_local_planner::LocalPlannerLimits limits = planner_util_.getCurrentLimits();
-    max_vel_x_ = std::max(std::min(static_cast<double>(max_vel_x->data), limits.max_vel_x), limits.min_vel_x);
+    max_vel_x_ = std::max(static_cast<double>(max_vel_x->data), min_vel_x_);
   }
 
   ros::Publisher global_plan_pub_, local_plan_pub_;
@@ -520,7 +558,12 @@ private:
   std::mutex config_mutex_;
   dynamic_reconfigure::Server<GracefulControllerConfig> *dsrv_;
   double max_vel_x_;
+  double min_vel_x_;
+  double max_vel_theta_;
+  double min_vel_theta_;
   double min_in_place_vel_theta_;
+  double acc_lim_x_;
+  double acc_lim_theta_;
   double xy_goal_tolerance_;
   double yaw_goal_tolerance_;
   double max_lookahead_;
