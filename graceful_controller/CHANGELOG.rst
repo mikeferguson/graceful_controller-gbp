@@ -1,0 +1,13 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package graceful_controller
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.2.1 (2021-01-11)
+------------------
+* update maintainer email
+* Contributors: Michael Ferguson
+
+0.2.0 (2021-01-11)
+------------------
+* Initial release
+* Contributors: Michael Ferguson
