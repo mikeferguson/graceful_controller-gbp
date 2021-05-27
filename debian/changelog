@@ -1,0 +1,33 @@
+ros-melodic-graceful-controller (0.3.1-1bionic) bionic; urgency=high
+
+
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Thu, 27 May 2021 07:00:00 -0000
+
+ros-melodic-graceful-controller (0.3.0-1bionic) bionic; urgency=high
+
+
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Thu, 14 Jan 2021 08:00:00 -0000
+
+ros-melodic-graceful-controller (0.2.2-1bionic) bionic; urgency=high
+
+
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Wed, 13 Jan 2021 08:00:00 -0000
+
+ros-melodic-graceful-controller (0.2.1-1bionic) bionic; urgency=high
+
+  * update maintainer email
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Mon, 11 Jan 2021 08:00:00 -0000
+
+ros-melodic-graceful-controller (0.2.0-1bionic) bionic; urgency=high
+
+  * Initial release
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <fergs@cobaltrobotics.com>  Mon, 11 Jan 2021 08:00:00 -0000
+
+
