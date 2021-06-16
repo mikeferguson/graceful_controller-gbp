@@ -1,0 +1,66 @@
+ros-melodic-graceful-controller-ros (0.4.0-1bionic) bionic; urgency=high
+
+  * add usage documentation (#19 <https://github.com/mikeferguson/graceful_controller/issues/19>)
+    also remove unused min_vel_theta parameter
+  * implement changes from review (#18 <https://github.com/mikeferguson/graceful_controller/issues/18>)
+    * Add collision checking during final rotation
+    * Add comments about getRobotVel returning velocities
+    * Rename path to simulated_path for clarity
+    * Rename pose to target_pose and goal_pose (now separate variables)
+    * Get rid of magic number for when to use final rotation
+  * simulate intial rotation properly (#17 <https://github.com/mikeferguson/graceful_controller/issues/17>)
+    previously, this simulated the big arc that we wouldn't follow anyways.
+    this could cause the robot to get stuck in corners or other tight areas.
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Mon, 14 Jun 2021 04:00:00 -0000
+
+ros-melodic-graceful-controller-ros (0.3.1-1bionic) bionic; urgency=high
+
+  * add feature for final rotation (#15 <https://github.com/mikeferguson/graceful_controller/issues/15>)
+    if the final pose orientation is very different from the end
+    of the path, we get a big sweeping turn. this feature uses
+    the previous orientation to avoid that sweeping turn and
+    instead does a final in-place rotation. Add filter and pose
+    publisher.
+  * not sure how build is working without this being executable
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Thu, 27 May 2021 04:00:00 -0000
+
+ros-melodic-graceful-controller-ros (0.3.0-1bionic) bionic; urgency=high
+
+  * unitialized limits causes test failures (#14 <https://github.com/mikeferguson/graceful_controller/issues/14>)
+    limits does not initialize prune_plan to a value,
+    causes flaky test when it ends up true (would also
+    probably be bad on a real robot)
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Thu, 14 Jan 2021 05:00:00 -0000
+
+ros-melodic-graceful-controller-ros (0.2.2-1bionic) bionic; urgency=high
+
+  * support robot footprint (#13 <https://github.com/mikeferguson/graceful_controller/issues/13>)
+  * cleanup parameters (#12 <https://github.com/mikeferguson/graceful_controller/issues/12>)
+    * drop unused parameters
+    * manage parameters directly
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Wed, 13 Jan 2021 05:00:00 -0000
+
+ros-melodic-graceful-controller-ros (0.2.1-1bionic) bionic; urgency=high
+
+  * update maintainer email
+  * fix the buildfarm build (#8 <https://github.com/mikeferguson/graceful_controller/issues/8>)
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Mon, 11 Jan 2021 05:00:00 -0000
+
+ros-melodic-graceful-controller-ros (0.2.0-1bionic) bionic; urgency=high
+
+  * Initial release
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <fergs@cobaltrobotics.com>  Mon, 11 Jan 2021 05:00:00 -0000
+
+
