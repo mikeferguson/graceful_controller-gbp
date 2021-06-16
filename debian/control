@@ -1,0 +1,12 @@
+Source: ros-noetic-graceful-controller
+Section: misc
+Priority: optional
+Maintainer: Michael Ferguson <mfergs7@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-noetic-angles, ros-noetic-catkin, ros-noetic-roscpp
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-noetic-graceful-controller
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-noetic-roscpp
+Description: A controller.
