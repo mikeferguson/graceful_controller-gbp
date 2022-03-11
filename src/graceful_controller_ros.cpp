@@ -49,6 +49,7 @@
 #include <base_local_planner/odometry_helper_ros.h>
 #include <costmap_2d/footprint.h>
 #include <graceful_controller/graceful_controller.hpp>
+#include <graceful_controller_ros/orientation_tools.hpp>
 #include <std_msgs/Float32.h>
 #include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -173,21 +174,13 @@ public:
                          boost::bind(&GracefulControllerROS::velocityCallback, this, _1));
       }
 
-      // Optionally prefer to do a final in-place rotation rather than gracefull approach final pose
-      prefer_final_rotation_ = false;
-      private_nh.getParam("prefer_final_rotation", prefer_final_rotation_);
-
-      // Optionally filter plan for poses with large difference in heading
-      yaw_filter_tolerance_ = 0.785;  // default of 45 degrees
-      private_nh.getParam("yaw_filter_tolerance", yaw_filter_tolerance_);
-
-      initialized_ = true;
-
       // Dynamic reconfigure is really only intended for tuning controller!
       dsrv_ = new dynamic_reconfigure::Server<GracefulControllerConfig>(private_nh);
       dynamic_reconfigure::Server<GracefulControllerConfig>::CallbackType cb =
         boost::bind(&GracefulControllerROS::reconfigureCallback, this, _1, _2);
       dsrv_->setCallback(cb);
+
+      initialized_ = true;
     }
     else
     {
@@ -231,8 +224,14 @@ public:
     acc_lim_theta_ = config.acc_lim_theta;
     xy_goal_tolerance_ = config.xy_goal_tolerance;
     yaw_goal_tolerance_ = config.yaw_goal_tolerance;
+    min_lookahead_ = config.min_lookahead;
     max_lookahead_ = config.max_lookahead;
     initial_rotate_tolerance_ = config.initial_rotate_tolerance;
+    prefer_final_rotation_ = config.prefer_final_rotation;
+    compute_orientations_ = config.compute_orientations;
+    use_orientation_filter_ = config.use_orientation_filter;
+    yaw_filter_tolerance_ = config.yaw_filter_tolerance;
+    yaw_gap_tolerance_ = config.yaw_goal_tolerance;
     resolution_ = planner_util_.getCostmap()->getResolution();
 
     controller_ = std::make_shared<GracefulController>(config.k1,
@@ -356,17 +355,26 @@ public:
       tf2::doTransform(transformed_plan[i], target_pose, odom_to_base);
 
       // Continue if target_pose is too far away from robot
-      if (std::hypot(target_pose.pose.position.x, target_pose.pose.position.y) > max_lookahead_)
+      double dist_to_target = std::hypot(target_pose.pose.position.x, target_pose.pose.position.y);
+      if (dist_to_target > max_lookahead_)
       {
         continue;
       }
 
-      // Avoid unstability and big sweeping turns at the end of paths by ignoring final heading
-      if (prefer_final_rotation_ && (dist_to_goal < max_lookahead_))
+      if (dist_to_goal < max_lookahead_)
       {
-        double yaw = std::atan2(target_pose.pose.position.y, target_pose.pose.position.x);
-        target_pose.pose.orientation.z = sin(yaw / 2.0);
-        target_pose.pose.orientation.w = cos(yaw / 2.0);
+        if (prefer_final_rotation_)
+        {
+          // Avoid unstability and big sweeping turns at the end of paths by ignoring final heading
+          double yaw = std::atan2(target_pose.pose.position.y, target_pose.pose.position.x);
+          target_pose.pose.orientation.z = sin(yaw / 2.0);
+          target_pose.pose.orientation.w = cos(yaw / 2.0);
+        }
+      }
+      else if (dist_to_target < min_lookahead_)
+      {
+        // Make sure target is far enough away to avoid instability
+        break;
       }
 
       // Configure controller max velocity based on current speed
@@ -543,42 +551,27 @@ public:
 
     // We need orientations on our poses
     std::vector<geometry_msgs::PoseStamped> oriented_plan;
-    oriented_plan.resize(plan.size());
-
-    // Copy the only oriented pose
-    oriented_plan.back() = plan.back();
-
-    // For each pose, point at the next one
-    for (size_t i = 0; i < oriented_plan.size() - 1; ++i)
+    if (compute_orientations_)
     {
-      oriented_plan[i] = plan[i];
-      double dx = plan[i+1].pose.position.x - plan[i].pose.position.x;
-      double dy = plan[i+1].pose.position.y - plan[i].pose.position.y;
-      double yaw = std::atan2(dy, dx);
-      oriented_plan[i].pose.orientation.z = sin(yaw / 2.0);
-      oriented_plan[i].pose.orientation.w = cos(yaw / 2.0);
+      oriented_plan = addOrientations(plan);
+    }
+    else
+    {
+      oriented_plan = plan;
     }
 
-    // Filter noisy orientations
+    // Filter noisy orientations (if desired)
     std::vector<geometry_msgs::PoseStamped> filtered_plan;
-    filtered_plan.reserve(oriented_plan.size());
-    filtered_plan.push_back(oriented_plan.front());
-    for (size_t i = 1; i < oriented_plan.size() - 1; ++i)
+    if (use_orientation_filter_)
     {
-      // Compare to before and after
-      if (angles::shortest_angular_distance(tf2::getYaw(filtered_plan.back().pose.orientation),
-                                            tf2::getYaw(oriented_plan[i].pose.orientation)) < yaw_filter_tolerance_)
-      {
-        filtered_plan.push_back(oriented_plan[i]);
-      }
-      else
-      {
-        ROS_DEBUG_NAMED("graceful_controller", "Filtering pose %lu", i);
-      }
+      filtered_plan = applyOrientationFilter(oriented_plan, yaw_filter_tolerance_, yaw_gap_tolerance_);
     }
-    filtered_plan.push_back(oriented_plan.back());
-    ROS_DEBUG_NAMED("graceful_controller", "Filtered %lu points from plan", oriented_plan.size() - filtered_plan.size());
+    else
+    {
+      filtered_plan = oriented_plan;
+    }
 
+    // Store the plan for computeVelocityCommands
     if (planner_util_.setPlan(filtered_plan))
     {
       has_new_path_ = true;
@@ -668,11 +661,15 @@ private:
   double acc_lim_theta_;
   double xy_goal_tolerance_;
   double yaw_goal_tolerance_;
+  double min_lookahead_;
   double max_lookahead_;
   double resolution_;
   double acc_dt_;
   double yaw_filter_tolerance_;
+  double yaw_gap_tolerance_;
   bool prefer_final_rotation_;
+  bool compute_orientations_;
+  bool use_orientation_filter_;
 
   // Controls initial rotation towards path
   double initial_rotate_tolerance_;
