@@ -2,7 +2,7 @@
 *
 * Software License Agreement (BSD License)
 *
-*  Copyright (c) 2021, Michael Ferguson
+*  Copyright (c) 2021-2022, Michael Ferguson
 *  Copyright (c) 2009, Willow Garage, Inc.
 *  All rights reserved.
 *
@@ -232,6 +232,7 @@ public:
     use_orientation_filter_ = config.use_orientation_filter;
     yaw_filter_tolerance_ = config.yaw_filter_tolerance;
     yaw_gap_tolerance_ = config.yaw_goal_tolerance;
+    latch_xy_goal_tolerance_ = config.latch_xy_goal_tolerance;
     resolution_ = planner_util_.getCostmap()->getResolution();
 
     controller_ = std::make_shared<GracefulController>(config.k1,
@@ -314,8 +315,10 @@ public:
                                      goal_pose.pose.position.y - robot_pose_.pose.position.y);
 
     // If we've reached the XY goal tolerance, just rotate
-    if (dist_to_goal < xy_goal_tolerance_)
+    if (dist_to_goal < xy_goal_tolerance_ || goal_tolerance_met_)
     {
+      // Reached goal, latch if desired
+      goal_tolerance_met_ = latch_xy_goal_tolerance_;
       // Compute velocity required to rotate towards goal
       tf2::doTransform(transformed_plan.back(), goal_pose, odom_to_base);
       rotateTowards(goal_pose, cmd_vel);
@@ -489,7 +492,7 @@ public:
         tf2::doTransform(next_pose, next_pose, base_to_odom);
         if (isColliding(next_pose.pose.position.x,
                         next_pose.pose.position.y,
-                        yaw,
+                        tf2::getYaw(next_pose.pose.orientation),
                         costmap_ros_))
         {
           // Reason will be printed in function
@@ -574,7 +577,9 @@ public:
     // Store the plan for computeVelocityCommands
     if (planner_util_.setPlan(filtered_plan))
     {
+      // Reset flags
       has_new_path_ = true;
+      goal_tolerance_met_ = false;
       ROS_INFO("Recieved a new path with %lu points", filtered_plan.size());
       return true;
     }
@@ -670,6 +675,10 @@ private:
   bool prefer_final_rotation_;
   bool compute_orientations_;
   bool use_orientation_filter_;
+
+  // Goal tolerance
+  bool latch_xy_goal_tolerance_;
+  bool goal_tolerance_met_;
 
   // Controls initial rotation towards path
   double initial_rotate_tolerance_;
