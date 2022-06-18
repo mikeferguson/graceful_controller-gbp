@@ -1,1 +1,1 @@
-{"trim": "", "base": "26e4e02", "trimbase": "", "parent": "debian/melodic/graceful_controller_ros", "previous": "5e652e0"}
+{"base": "7e11c95", "parent": "debian/melodic/graceful_controller_ros", "previous": "562f84d", "trim": "", "trimbase": ""}
