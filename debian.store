@@ -1,1 +1,1 @@
-{"trim": "", "base": "ecb3301", "trimbase": "", "parent": "debian/noetic/graceful_controller_ros", "previous": "f07c7a5"}
+{"base": "7f1fafc", "parent": "debian/noetic/graceful_controller_ros", "previous": "0485a0c", "trim": "", "trimbase": ""}
