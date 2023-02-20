@@ -1,0 +1,137 @@
+ros-noetic-graceful-controller-ros (0.4.6-1focal) focal; urgency=high
+
+  * follow acceleration limits when velocity limit changes (#62 <https://github.com/mikeferguson/graceful_controller/issues/62>)
+  * add angular velocity limiting control (#61 <https://github.com/mikeferguson/graceful_controller/issues/61>)
+    Adds max_x_to_max_theta_scale_factor which can be used to control how the angular velocity changes relative to the linear velocity when use_vel_topic feature is enabled.
+  * Contributors: Michael Ferguson, TrazCobalt
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Mon, 20 Feb 2023 08:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.4.5-1focal) focal; urgency=high
+
+  * compute lookahead as distance along path (#55 <https://github.com/mikeferguson/graceful_controller/issues/55>)
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Wed, 24 Aug 2022 07:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.4.4-1focal) focal; urgency=high
+
+  * always rotate to match desired heading (#54 <https://github.com/mikeferguson/graceful_controller/issues/54>)
+    If the goal tolerances are large (greater than 0.5m) the
+    robot might end up trying to point at the goal rather than
+    aligning with the goal heading
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Wed, 24 Aug 2022 07:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.4.3-1focal) focal; urgency=high
+
+  * use separate decel_lim_x for control law (#45 <https://github.com/mikeferguson/graceful_controller/issues/45>)
+  * add velocity limit to goal tolerance (#44 <https://github.com/mikeferguson/graceful_controller/issues/44>)
+  * fix deceleration time (#43 <https://github.com/mikeferguson/graceful_controller/issues/43>)
+    this reverts #6 <https://github.com/mikeferguson/graceful_controller/issues/6>, to what is apparently the correct math
+  * add footprint inflation for higher speeds (#32 <https://github.com/mikeferguson/graceful_controller/issues/32>)
+    * add a feature to inflate the footprint at higher speeds
+    * only update max_vel_x once per call
+  * initialze collision_points_ to null (#35 <https://github.com/mikeferguson/graceful_controller/issues/35>)
+  * add optional visualization of colliding points (#34 <https://github.com/mikeferguson/graceful_controller/issues/34>)
+  * split out hpp file, clang format (#33 <https://github.com/mikeferguson/graceful_controller/issues/33>)
+  * fix bug in latch_xy_goal_tolerance (#31 <https://github.com/mikeferguson/graceful_controller/issues/31>)
+    While the main control loop can latch the goal (thus it will stop trying to hunt around) - that isn't understood by the isGoalReached() function - which leads to the robot wiggling back and forth for a while
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Sat, 18 Jun 2022 07:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.4.2-1focal) focal; urgency=high
+
+  * fix goal tolerance reset (#29 <https://github.com/mikeferguson/graceful_controller/issues/29>)
+  * add latch_xy_goal_tolerance parameter (#28 <https://github.com/mikeferguson/graceful_controller/issues/28>)
+  * fix orientation issue with collision checking (#27 <https://github.com/mikeferguson/graceful_controller/issues/27>)
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Tue, 29 Mar 2022 07:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.4.1-1focal) focal; urgency=high
+
+  * add ability to disable orientation filtering (#26 <https://github.com/mikeferguson/graceful_controller/issues/26>)
+    also make everything dynamic reconfigurable
+  * don't crash when path is empty (#25 <https://github.com/mikeferguson/graceful_controller/issues/25>)
+  * add min_lookahead parameter (#24 <https://github.com/mikeferguson/graceful_controller/issues/24>)
+    when the pose is very close to the robot, we can get
+    some instability (rapid side-to-side movement due to
+    large angular errors over small linear distances). by
+    adding this parameter, we can instead fallback to
+    recovery behaviors and find a better path.
+  * fix occasional boost::lock crash (#23 <https://github.com/mikeferguson/graceful_controller/issues/23>)
+  * limit the distance between poses as filter runs (#21 <https://github.com/mikeferguson/graceful_controller/issues/21>)
+  * improve the orientation filter, add tests (#20 <https://github.com/mikeferguson/graceful_controller/issues/20>)
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Fri, 11 Mar 2022 08:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.4.0-1focal) focal; urgency=high
+
+  * add usage documentation (#19 <https://github.com/mikeferguson/graceful_controller/issues/19>)
+    also remove unused min_vel_theta parameter
+  * implement changes from review (#18 <https://github.com/mikeferguson/graceful_controller/issues/18>)
+    * Add collision checking during final rotation
+    * Add comments about getRobotVel returning velocities
+    * Rename path to simulated_path for clarity
+    * Rename pose to target_pose and goal_pose (now separate variables)
+    * Get rid of magic number for when to use final rotation
+  * simulate intial rotation properly (#17 <https://github.com/mikeferguson/graceful_controller/issues/17>)
+    previously, this simulated the big arc that we wouldn't follow anyways.
+    this could cause the robot to get stuck in corners or other tight areas.
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Mon, 14 Jun 2021 07:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.3.1-1focal) focal; urgency=high
+
+  * add feature for final rotation (#15 <https://github.com/mikeferguson/graceful_controller/issues/15>)
+    if the final pose orientation is very different from the end
+    of the path, we get a big sweeping turn. this feature uses
+    the previous orientation to avoid that sweeping turn and
+    instead does a final in-place rotation. Add filter and pose
+    publisher.
+  * not sure how build is working without this being executable
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Thu, 27 May 2021 07:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.3.0-1focal) focal; urgency=high
+
+  * unitialized limits causes test failures (#14 <https://github.com/mikeferguson/graceful_controller/issues/14>)
+    limits does not initialize prune_plan to a value,
+    causes flaky test when it ends up true (would also
+    probably be bad on a real robot)
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Thu, 14 Jan 2021 08:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.2.2-1focal) focal; urgency=high
+
+  * support robot footprint (#13 <https://github.com/mikeferguson/graceful_controller/issues/13>)
+  * cleanup parameters (#12 <https://github.com/mikeferguson/graceful_controller/issues/12>)
+    * drop unused parameters
+    * manage parameters directly
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Wed, 13 Jan 2021 08:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.2.1-1focal) focal; urgency=high
+
+  * update maintainer email
+  * fix the buildfarm build (#8 <https://github.com/mikeferguson/graceful_controller/issues/8>)
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <mfergs7@gmail.com>  Mon, 11 Jan 2021 08:00:00 -0000
+
+ros-noetic-graceful-controller-ros (0.2.0-1focal) focal; urgency=high
+
+  * Initial release
+  * Contributors: Michael Ferguson
+
+ -- Michael Ferguson <fergs@cobaltrobotics.com>  Mon, 11 Jan 2021 08:00:00 -0000
+
+
