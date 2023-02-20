@@ -1,3 +1,28 @@
+## graceful_controller (melodic) - 0.4.6-1
+
+The packages in the `graceful_controller` repository were released into the `melodic` distro by running `/usr/bin/bloom-release -r melodic -t melodic graceful_controller` on `Mon, 20 Feb 2023 18:32:17 -0000`
+
+These packages were released:
+- `graceful_controller`
+- `graceful_controller_ros`
+
+Version of package(s) in repository `graceful_controller`:
+
+- upstream repository: https://github.com/mikeferguson/graceful_controller.git
+- release repository: https://github.com/mikeferguson/graceful_controller-gbp.git
+- rosdistro version: `0.4.5-1`
+- old version: `0.4.5-1`
+- new version: `0.4.6-1`
+
+Versions of tools used:
+
+- bloom version: `0.11.1`
+- catkin_pkg version: `0.4.24`
+- rosdep version: `0.21.0`
+- rosdistro version: `0.8.3`
+- vcstools version: `0.1.42`
+
+
 ## graceful_controller (noetic) - 0.4.5-1
 
 The packages in the `graceful_controller` repository were released into the `noetic` distro by running `/usr/bin/bloom-release -r noetic -t noetic graceful_controller` on `Tue, 20 Sep 2022 16:52:35 -0000`
