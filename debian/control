@@ -1,0 +1,13 @@
+Source: ros-melodic-graceful-controller-ros
+Section: misc
+Priority: optional
+Maintainer: Michael Ferguson <mfergs7@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), ros-melodic-angles, ros-melodic-base-local-planner, ros-melodic-catkin, ros-melodic-costmap-2d, ros-melodic-dynamic-reconfigure, ros-melodic-geometry-msgs, ros-melodic-graceful-controller, ros-melodic-nav-core, ros-melodic-nav-msgs, ros-melodic-pluginlib, ros-melodic-roscpp, ros-melodic-std-msgs, ros-melodic-tf2-geometry-msgs, ros-melodic-tf2-ros
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-melodic-graceful-controller-ros
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, ros-melodic-angles, ros-melodic-base-local-planner, ros-melodic-costmap-2d, ros-melodic-dynamic-reconfigure, ros-melodic-geometry-msgs, ros-melodic-graceful-controller, ros-melodic-nav-core, ros-melodic-nav-msgs, ros-melodic-pluginlib, ros-melodic-roscpp, ros-melodic-std-msgs, ros-melodic-tf2-geometry-msgs, ros-melodic-tf2-ros
+Description: A controller.
+ Some say it might be graceful.
